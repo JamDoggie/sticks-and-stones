@@ -1,0 +1,2 @@
+﻿60688
+C:/Users/JamDo/Documents/Godot/godot.windows.editor.x86_64.mono.exe

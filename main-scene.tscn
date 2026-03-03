@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://cg7unef3p1wl4"]
+
+[ext_resource type="Script" uid="uid://b6faxbmcqxvwi" path="res://sticks_and_stones/MinecraftBridge.cs" id="1_q2uwy"]
+[ext_resource type="Script" uid="uid://bbip0oab31ce5" path="res://sticks_and_stones/MinecraftGodotCamera.cs" id="2_n7ce1"]
+
+[node name="world" type="Node3D" unique_id=1458897813]
+
+[node name="Button" type="Button" parent="." unique_id=1763816468]
+offset_right = 145.0
+offset_bottom = 51.0
+text = "test"
+
+[node name="MinecraftBridge" type="Node" parent="." unique_id=1382460139]
+script = ExtResource("1_q2uwy")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1370356610]
+script = ExtResource("2_n7ce1")

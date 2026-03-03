@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "SticksAndStones": {
+      "commandName": "Project"
+    },
+    "Run in Godot": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Users\\JamDo\\Documents\\Godot\\godot.windows.editor.x86_64.mono.exe",
+      "commandLineArgs": "--path .",
+      "workingDirectory": ".",
+      "nativeDebugging": false
+    }
+  }
+}
