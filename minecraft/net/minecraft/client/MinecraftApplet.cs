@@ -1,4 +1,4 @@
-﻿using net.minecraft.input;
+using net.minecraft.input;
 using net.minecraft.src;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
@@ -182,7 +182,7 @@ namespace net.minecraft.client
 		{
 			if (mcThread == null)
 			{
-				mcThread = new Thread(() => mc.run());
+				mcThread = new Thread(() => mc._RunGame());
 				mcThread.Name = "Minecraft main thread";
 				mcThread.Start();
 			}

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using BlockByBlock.net.minecraft.client.entity.render.model;
 using net.minecraft.client;
 using net.minecraft.src;
@@ -97,7 +97,7 @@ namespace net.minecraft.client.entity.render.model
             rotationPointZ = f3;
         }
 
-        public virtual void render(float f1)
+        public virtual void render(float scale)
         {
             if (!isHidden)
             {
@@ -108,34 +108,34 @@ namespace net.minecraft.client.entity.render.model
                     {
                         if (rotationPointX == 0.0F && rotationPointY == 0.0F && rotationPointZ == 0.0F)
                         {
-                            TessellateShapes(f1);
+                            TessellateShapes(scale);
                             if (childModels != null)
                             {
                                 for (i2 = 0; i2 < childModels.Count; ++i2)
                                 {
-                                    ((ModelRenderer)childModels[i2]).render(f1);
+                                    ((ModelRenderer)childModels[i2]).render(scale);
                                 }
                             }
                         }
                         else
                         {
-                            Minecraft.renderPipeline.ModelMatrix.Translate(rotationPointX * f1, rotationPointY * f1, rotationPointZ * f1);
-                            TessellateShapes(f1);
+                            Minecraft.renderPipeline.ModelMatrix.Translate(rotationPointX * scale, rotationPointY * scale, rotationPointZ * scale);
+                            TessellateShapes(scale);
                             if (childModels != null)
                             {
                                 for (i2 = 0; i2 < childModels.Count; ++i2)
                                 {
-                                    ((ModelRenderer)childModels[i2]).render(f1);
+                                    ((ModelRenderer)childModels[i2]).render(scale);
                                 }
                             }
 
-                            Minecraft.renderPipeline.ModelMatrix.Translate(-rotationPointX * f1, -rotationPointY * f1, -rotationPointZ * f1);
+                            Minecraft.renderPipeline.ModelMatrix.Translate(-rotationPointX * scale, -rotationPointY * scale, -rotationPointZ * scale);
                         }
                     }
                     else
                     {
                         Minecraft.renderPipeline.ModelMatrix.PushMatrix();
-                        Minecraft.renderPipeline.ModelMatrix.Translate(rotationPointX * f1, rotationPointY * f1, rotationPointZ * f1);
+                        Minecraft.renderPipeline.ModelMatrix.Translate(rotationPointX * scale, rotationPointY * scale, rotationPointZ * scale);
                         if (rotateAngleZ != 0.0F)
                         {
                             Minecraft.renderPipeline.ModelMatrix.Rotate(rotateAngleZ * 57.295776F, 0.0F, 0.0F, 1.0F);
@@ -151,12 +151,12 @@ namespace net.minecraft.client.entity.render.model
                             Minecraft.renderPipeline.ModelMatrix.Rotate(rotateAngleX * 57.295776F, 1.0F, 0.0F, 0.0F);
                         }
 
-                        TessellateShapes(f1);
+                        TessellateShapes(scale);
                         if (childModels != null)
                         {
                             for (i2 = 0; i2 < childModels.Count; ++i2)
                             {
-                                ((ModelRenderer)childModels[i2]).render(f1);
+                                ((ModelRenderer)childModels[i2]).render(scale);
                             }
                         }
 

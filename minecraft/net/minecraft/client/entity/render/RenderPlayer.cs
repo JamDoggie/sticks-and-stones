@@ -1,4 +1,4 @@
-﻿using net.minecraft.src;
+using net.minecraft.src;
 
 namespace net.minecraft.client.entity.render
 {
@@ -303,7 +303,7 @@ namespace net.minecraft.client.entity.render
                     Minecraft.renderPipeline.ModelMatrix.Rotate(20.0F, 0.0F, 0.0F, 1.0F);
                 }
 
-                if (itemStack21.Item.func_46058_c())
+                if (itemStack21.Item.HasTint())
                 {
                     for (int i25 = 0; i25 <= 1; ++i25)
                     {

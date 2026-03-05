@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using net.minecraft.client.entity;
 
 namespace net.minecraft.src
@@ -116,7 +116,7 @@ namespace net.minecraft.src
 			return i2 > 0 ? 0xFFFFFF : PotionHelper.func_40358_a(i1, false);
 		}
 
-		public override bool func_46058_c()
+		public override bool HasTint()
 		{
 			return true;
 		}

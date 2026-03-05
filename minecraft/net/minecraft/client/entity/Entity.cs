@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BlockByBlock.java_extensions;
 using net.minecraft.src;
 
@@ -149,12 +149,12 @@ namespace net.minecraft.client.entity
             boundingBox.setBounds(d1 - (double)f7, d3 - yOffset + ySize, d5 - (double)f7, d1 + (double)f7, d3 - yOffset + ySize + (double)f8, d5 + (double)f7);
         }
 
-        public virtual void setAngles(float f1, float f2)
+        public virtual void setAngles(float yawDelta, float pitchDelta)
         {
-            float f3 = rotationPitch;
-            float f4 = rotationYaw;
-            rotationYaw = (float)(rotationYaw + (double)f1 * 0.15D);
-            rotationPitch = (float)(rotationPitch - (double)f2 * 0.15D);
+            float originalPitch = rotationPitch;
+            float originalYaw = rotationYaw;
+            rotationYaw = (float)(rotationYaw + (double)yawDelta * 0.15D);
+            rotationPitch = (float)(rotationPitch - (double)pitchDelta * 0.15D);
             if (rotationPitch < -90.0F)
             {
                 rotationPitch = -90.0F;
@@ -165,8 +165,8 @@ namespace net.minecraft.client.entity
                 rotationPitch = 90.0F;
             }
 
-            prevRotationPitch += rotationPitch - f3;
-            prevRotationYaw += rotationYaw - f4;
+            prevRotationPitch += rotationPitch - originalPitch;
+            prevRotationYaw += rotationYaw - originalYaw;
         }
 
         public virtual void onUpdate()

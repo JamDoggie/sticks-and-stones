@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://345sbe85lb4v"]
+
+[ext_resource type="Texture2D" uid="uid://c0giwkrxg40d" path="res://modern_models/player/arm_char.png" id="1_dam2v"]
+
+[resource]
+albedo_texture = ExtResource("1_dam2v")
+texture_filter = 0

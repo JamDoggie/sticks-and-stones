@@ -1,4 +1,4 @@
-﻿namespace net.minecraft.src
+namespace net.minecraft.src
 {
 	public class ChunkCache : IBlockAccess
 	{
@@ -8,13 +8,13 @@
 		private bool areChunksEmpty_IDK;
 		private World worldObj;
         
-		public ChunkCache(World world1, int i2, int i3, int i4, int i5, int i6, int i7)
+		public ChunkCache(World world1, int startX, int startY, int startZ, int endX, int endY, int endZ)
 		{
 			this.worldObj = world1;
-			this.chunkX = i2 >> 4;
-			this.chunkZ = i4 >> 4;
-			int i8 = i5 >> 4;
-			int i9 = i7 >> 4;
+			this.chunkX = startX >> 4;
+			this.chunkZ = startZ >> 4;
+			int i8 = endX >> 4;
+			int i9 = endZ >> 4;
             
 			this.chunkArray = RectangularArrays.RectangularChunkArray(i8 - this.chunkX + 1, i9 - this.chunkZ + 1);
 			this.areChunksEmpty_IDK = true;
@@ -27,7 +27,7 @@
 					if (chunk12 != null)
 					{
 						this.chunkArray[i10 - this.chunkX][i11 - this.chunkZ] = chunk12;
-						if (!chunk12.getAreLevelsEmpty(i3, i6))
+						if (!chunk12.getAreLevelsEmpty(startY, endY))
 						{
 							this.areChunksEmpty_IDK = false;
 						}

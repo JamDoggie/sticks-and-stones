@@ -1,4 +1,4 @@
-﻿using net.minecraft.client;
+using net.minecraft.client;
 using net.minecraft.client.entity;
 using net.minecraft.client.entity.render.model;
 using net.minecraft.src;
@@ -69,7 +69,7 @@ namespace net.minecraft.client.entity.render
                 }
 
                 renderManager.itemRenderer.renderItem(entityLiving1, itemStack3, 0);
-                if (itemStack3.Item.func_46058_c())
+                if (itemStack3.Item.HasTint())
                 {
                     renderManager.itemRenderer.renderItem(entityLiving1, itemStack3, 1);
                 }

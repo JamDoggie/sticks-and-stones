@@ -2,6 +2,38 @@
 
 [ext_resource type="Script" uid="uid://b6faxbmcqxvwi" path="res://sticks_and_stones/MinecraftBridge.cs" id="1_q2uwy"]
 [ext_resource type="Script" uid="uid://bbip0oab31ce5" path="res://sticks_and_stones/MinecraftGodotCamera.cs" id="2_n7ce1"]
+[ext_resource type="Texture2D" uid="uid://67c2y6ibx8cl" path="res://kloofendal_48d_partly_cloudy_puresky_4k(1).exr" id="3_n7ce1"]
+[ext_resource type="PackedScene" uid="uid://c3cm37xcxvjt" path="res://modern_models/player/arm.glb" id="4_5ulvj"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_n7ce1"]
+panorama = ExtResource("3_n7ce1")
+
+[sub_resource type="Sky" id="Sky_5ulvj"]
+sky_material = SubResource("PanoramaSkyMaterial_n7ce1")
+
+[sub_resource type="Environment" id="Environment_n7ce1"]
+background_mode = 2
+sky = SubResource("Sky_5ulvj")
+ssao_enabled = true
+ssil_enabled = true
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+sdfgi_y_scale = 2
+glow_enabled = true
+glow_intensity = 0.55
+glow_bloom = 0.06
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.009
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_5ulvj"]
+panorama = ExtResource("3_n7ce1")
+
+[sub_resource type="Sky" id="Sky_g86mt"]
+sky_material = SubResource("PanoramaSkyMaterial_5ulvj")
+
+[sub_resource type="Environment" id="Environment_e304g"]
+background_mode = 2
+sky = SubResource("Sky_g86mt")
 
 [node name="world" type="Node3D" unique_id=1458897813]
 
@@ -10,8 +42,27 @@ offset_right = 145.0
 offset_bottom = 51.0
 text = "test"
 
-[node name="MinecraftBridge" type="Node" parent="." unique_id=1382460139]
+[node name="MinecraftBridge" type="Node" parent="." unique_id=1382460139 node_paths=PackedStringArray("MinecraftCamera", "ArmNode")]
 script = ExtResource("1_q2uwy")
+MinecraftCamera = NodePath("../Camera3D")
+ArmNode = NodePath("../Camera3D/arm_offset/arm")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1255932133]
+transform = Transform3D(0.37485355, -0.61073995, -0.69748235, 0.9192359, 0.3425394, 0.19409285, 0.12037497, -0.71390724, 0.68981624, 3.799201, 3.5515819, 0)
+shadow_enabled = true
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1370356610]
+environment = SubResource("Environment_n7ce1")
+current = true
+fov = 70.0
 script = ExtResource("2_n7ce1")
+
+[node name="arm_offset" type="Node3D" parent="Camera3D" unique_id=1547554162]
+
+[node name="arm" parent="Camera3D/arm_offset" unique_id=912852026 instance=ExtResource("4_5ulvj")]
+transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1904361750]
+environment = SubResource("Environment_e304g")
+
+[node name="world_meshes" type="Node3D" parent="." unique_id=263339499]

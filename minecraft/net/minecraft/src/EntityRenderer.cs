@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using BlockByBlock.helpers;
 using BlockByBlock.java_extensions;
@@ -11,6 +11,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SticksAndStones.sticks_and_stones.bridge_utils;
 
 namespace net.minecraft.src
 {
@@ -458,7 +459,18 @@ namespace net.minecraft.src
 				}
 			}
 
-		}
+			if (mc._GodotBridge?.MinecraftCamera != null)
+				{
+					EntityLiving cameraEntity = this.mc.renderViewEntity;
+					float interpX = (float)(cameraEntity.lastTickPosX + (cameraEntity.posX - cameraEntity.lastTickPosX) * (double)f1);
+					float interpY = (float)(cameraEntity.lastTickPosY + (cameraEntity.posY - cameraEntity.lastTickPosY) * (double)f1);
+					float interpZ = (float)(cameraEntity.lastTickPosZ + (cameraEntity.posZ - cameraEntity.lastTickPosZ) * (double)f1);
+
+					var modelMatrixInv = Minecraft.renderPipeline.ModelMatrix.GetMatrix().Inverted();
+					var cameraWorldMatrix = modelMatrixInv * Matrix4.CreateTranslation(interpX, interpY, interpZ);
+					mc._GodotBridge.MinecraftCamera.GlobalTransform = cameraWorldMatrix.GodotTransform();
+				}
+        }
 
 		private void renderHand(float f1, int i2)
 		{

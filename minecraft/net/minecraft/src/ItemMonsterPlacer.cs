@@ -1,4 +1,4 @@
-﻿using net.minecraft.client.entity;
+using net.minecraft.client.entity;
 
 namespace net.minecraft.src
 {
@@ -27,7 +27,7 @@ namespace net.minecraft.src
 			return entityEggInfo3 != null ? (i2 == 0 ? entityEggInfo3.primaryColor : entityEggInfo3.secondaryColor) : 0xFFFFFF;
 		}
 
-		public override bool func_46058_c()
+		public override bool HasTint()
 		{
 			return true;
 		}

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using BlockByBlock.java_extensions;
 using BlockByBlock.net.minecraft.client.entity.particle;
@@ -57,6 +57,7 @@ namespace net.minecraft.src
 		private int worldRenderersCheckIndex;
 		private System.Collections.IList activeWorldRenderers = new ArrayList();
 		private ChunkMeshAllocator meshAllocator;
+		public ChunkMeshAllocator MeshAllocator => meshAllocator;
 
 		private VertexBuffer starVBO;
         private VertexBuffer sky1VBO;
@@ -688,7 +689,7 @@ namespace net.minecraft.src
             // Draw world VBO
 			modelMatrix.PushMatrix();
 			GL.Enable(EnableCap.CullFace);
-            Tessellator.instance.DrawMeshAllocator(meshAllocator.WorldBuffer, meshAllocator, sortedWorldRenderers, pass);
+            //Tessellator.instance.DrawMeshAllocator(meshAllocator.WorldBuffer, meshAllocator, sortedWorldRenderers, pass);
             modelMatrix.PopMatrix();
 
             mc.gameRenderer.disableLightmap(d2);

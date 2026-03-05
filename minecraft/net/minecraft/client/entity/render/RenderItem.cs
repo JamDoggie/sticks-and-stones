@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BlockByBlock.java_extensions;
 using BlockByBlock.net.minecraft.render;
 using net.minecraft.client;
@@ -83,7 +83,7 @@ namespace net.minecraft.client.entity.render
             {
                 int i14;
                 float f16;
-                if (itemStack10.Item.func_46058_c())
+                if (itemStack10.Item.HasTint())
                 {
                     Minecraft.renderPipeline.ModelMatrix.Scale(0.5F, 0.5F, 0.5F);
                     loadTexture("/gui/items.png");
@@ -211,7 +211,7 @@ namespace net.minecraft.client.entity.render
             else
             {
                 int i8;
-                if (Item.itemsList[i3].func_46058_c())
+                if (Item.itemsList[i3].HasTint())
                 {
                     Minecraft.renderPipeline.SetState(RenderState.LightingState, false);
                     renderEngine2.bindTexture(renderEngine2.getTexture("/gui/items.png"));

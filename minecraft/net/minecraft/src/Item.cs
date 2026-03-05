@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BlockByBlock.java_extensions;
 using net.minecraft.client.entity;
 
@@ -476,7 +476,7 @@ namespace net.minecraft.src
 			}
 		}
 
-		public virtual bool func_46058_c()
+		public virtual bool HasTint()
 		{
 			return false;
 		}

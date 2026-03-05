@@ -1,4 +1,4 @@
-﻿using BlockByBlock.helpers;
+using BlockByBlock.helpers;
 using BlockByBlock.net.minecraft.client.entity.render;
 using BlockByBlock.net.minecraft.render;
 using net.minecraft.client;
@@ -125,43 +125,43 @@ namespace net.minecraft.src
             if (needsUpdate)
             {
                 needsUpdate = false;
-                int i1 = posX;
-                int i2 = posY;
-                int i3 = posZ;
-                int i4 = posX + 16;
-                int i5 = posY + 16;
-                int i6 = posZ + 16;
+                int startX = posX;
+                int startY = posY;
+                int startZ = posZ;
+                int endX = posX + 16;
+                int endY = posY + 16;
+                int endZ = posZ + 16;
 
-                for (int i7 = 0; i7 < 2; ++i7)
+                for (int i = 0; i < 2; ++i)
                 {
-                    skipRenderPass[i7] = true;
+                    skipRenderPass[i] = true;
                 }
 
                 Chunk.isLit = false;
                 HashSet<object> hashSet21 = new HashSet<object>();
                 hashSet21.AddAll(tileEntityRenderers);
                 tileEntityRenderers.Clear();
-                sbyte b8 = 1;
-                ChunkCache chunkCache9 = new ChunkCache(worldObj, i1 - b8, i2 - b8, i3 - b8, i4 + b8, i5 + b8, i6 + b8);
-                if (!chunkCache9.getChunksEmpty_IDK())
+                sbyte offset = 1;
+                ChunkCache chunkCache = new(worldObj, startX - offset, startY - offset, startZ - offset, endX + offset, endY + offset, endZ + offset);
+                if (!chunkCache.getChunksEmpty_IDK())
                 {
                     ++chunksUpdated;
-                    RenderBlocks renderBlocks10 = new(chunkCache9);
+                    RenderBlocks blockRenderer = new(chunkCache);
 
-                    for (int currentPass = 0; currentPass < 2; ++currentPass)
+                    for (int currentPass = 0; currentPass < 2; currentPass++)
                     {
                         bool z12 = false;
                         bool rendererContainsBlocks = false;
                         bool blockFound = false;
 
-                        for (int i15 = i2; i15 < i5; ++i15)
+                        for (int y = startY; y < endY; ++y)
                         {
-                            for (int i16 = i3; i16 < i6; ++i16)
+                            for (int z = startZ; z < endZ; ++z)
                             {
-                                for (int i17 = i1; i17 < i4; ++i17)
+                                for (int x = startX; x < endX; ++x)
                                 {
-                                    int i18 = chunkCache9.getBlockId(i17, i15, i16);
-                                    if (i18 > 0)
+                                    int blockId = chunkCache.getBlockId(x, y, z);
+                                    if (blockId > 0)
                                     {
                                         if (!blockFound)
                                         {
@@ -171,30 +171,29 @@ namespace net.minecraft.src
 
                                             Minecraft.renderPipeline.ModelMatrix.PushMatrix();
                                             
-                                            float f19 = 1F;
                                             setupGLTranslation();
                                             
                                             tessellator.addTranslation((double)(-posX), (double)(-posY), (double)(-posZ));
                                         }
 
-                                        if (currentPass == 0 && Block.blocksList[i18].hasTileEntity())
+                                        if (currentPass == 0 && Block.blocksList[blockId].hasTileEntity())
                                         {
-                                            TileEntity tileEntity23 = chunkCache9.getBlockTileEntity(i17, i15, i16);
-                                            if (TileEntityRenderer.instance.hasSpecialRenderer(tileEntity23))
+                                            TileEntity tileEntity = chunkCache.getBlockTileEntity(x, y, z);
+                                            if (TileEntityRenderer.instance.hasSpecialRenderer(tileEntity))
                                             {
-                                                tileEntityRenderers.Add(tileEntity23);
+                                                tileEntityRenderers.Add(tileEntity);
                                             }
                                         }
 
-                                        Block block24 = Block.blocksList[i18];
-                                        int renderPass = block24.RenderBlockPass;
+                                        Block block = Block.blocksList[blockId];
+                                        int renderPass = block.RenderBlockPass;
                                         if (renderPass != currentPass)
                                         {
                                             z12 = true;
                                         }
                                         else if (renderPass == currentPass)
                                         {
-                                            rendererContainsBlocks |= renderBlocks10.renderBlockByRenderType(block24, i17, i15, i16);
+                                            rendererContainsBlocks |= blockRenderer.renderBlockByRenderType(block, x, y, z);
                                         }
                                     }
                                 }
@@ -238,22 +237,22 @@ namespace net.minecraft.src
                 }
 
                 HashSet<object> hashSet22 = new HashSet<object>();
-                hashSet22.AddAll(this.tileEntityRenderers);
+                hashSet22.AddAll(tileEntityRenderers);
                 hashSet22.RemoveAll(hashSet21);
-                this.tileEntities.AddRange(hashSet22);
-                hashSet21.RemoveAll(this.tileEntityRenderers);
-                this.tileEntities.RemoveAll(hashSet21);
-                this.isChunkLit = Chunk.isLit;
-                this.isInitialized = true;
+                tileEntities.AddRange(hashSet22);
+                hashSet21.RemoveAll(tileEntityRenderers);
+                tileEntities.RemoveAll(hashSet21);
+                isChunkLit = Chunk.isLit;
+                isInitialized = true;
             }
             Profiler.endSection();
         }
 
         public virtual float distanceToEntitySquared(Entity entity1)
         {
-            float f2 = (float)(entity1.posX - (double)this.posXPlus);
-            float f3 = (float)(entity1.posY - (double)this.posYPlus);
-            float f4 = (float)(entity1.posZ - (double)this.posZPlus);
+            float f2 = (float)(entity1.posX - posXPlus);
+            float f3 = (float)(entity1.posY - posYPlus);
+            float f4 = (float)(entity1.posZ - posZPlus);
             return f2 * f2 + f3 * f3 + f4 * f4;
         }
 

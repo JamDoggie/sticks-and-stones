@@ -7,9 +7,13 @@ namespace SticksAndStones.sticks_and_stones
     public partial class MinecraftBridge : Node
     {
         private Minecraft? minecraft;
+        private bool godotMeshInitialized = false;
 
         // Game nodes
+        [Export]
         public MinecraftGodotCamera? MinecraftCamera { get; set; }
+        [Export]
+        public Node3D? ArmNode { get; set; }
 
         public override void _Ready()
         {
@@ -20,6 +24,13 @@ namespace SticksAndStones.sticks_and_stones
         {
             if (minecraft == null)
                 return;
+
+            if (!godotMeshInitialized && minecraft.renderGlobal != null)
+            {
+                var scenario = GetViewport().World3D.Scenario;
+                minecraft.renderGlobal.MeshAllocator.InitGodot(scenario);
+                godotMeshInitialized = true;
+            }
 
             minecraft._RunLoop();
         }

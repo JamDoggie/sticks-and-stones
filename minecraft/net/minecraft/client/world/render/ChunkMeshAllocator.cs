@@ -1,4 +1,4 @@
-﻿using BlockByBlock.net.minecraft.render;
+using BlockByBlock.net.minecraft.render;
 using javax.swing.text;
 using net.minecraft.client.entity;
 using net.minecraft.src;
@@ -8,7 +8,7 @@ using System.Security.Policy;
 
 namespace net.minecraft.client.world.render
 {
-    public unsafe partial class ChunkMeshAllocator
+    public partial class ChunkMeshAllocator
     {
         public UnsafeByteBuffer Buffer { get; set; }
         public Dictionary<int, BufferSegment> DataAllocations = new(); // Id, Offset
@@ -26,15 +26,15 @@ namespace net.minecraft.client.world.render
             Buffer = new(DefaultBufferVerticeSize);
 
             int[] buffers = { 0, 0 }; // 0 = world VBO, 1 = positions SSBO
-            GL.CreateBuffers(2, buffers);
+            //GL.CreateBuffers(2, buffers);
             
             int worldVBO = buffers[0];
             WorldBuffer = new(DefaultBufferVerticeSize, 0, worldVBO, 7, true, true, true, false);
-            GL.NamedBufferData(worldVBO, Buffer.Size, Buffer.Handle, BufferUsageHint.DynamicDraw);
+            //GL.NamedBufferData(worldVBO, Buffer.Size, Buffer.Handle, BufferUsageHint.DynamicDraw);
             
             PositionsSSBO = buffers[1];
 
-            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 5, PositionsSSBO);
+            //GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 5, PositionsSSBO);
         }
         
         public int AllocateData(Span<byte> data, WorldRenderer renderer, int pass)
@@ -94,6 +94,8 @@ namespace net.minecraft.client.world.render
         {
             if (!DataAllocations.ContainsKey(id))
                 return false;
+
+            GodotFreeData(id);
 
             BufferSegment allocatedSegment = DataAllocations[id];
 
@@ -190,11 +192,13 @@ namespace net.minecraft.client.world.render
             UpdateGLArrayForSegment(segment);
             UpdateVertexCount();
 
+            GodotPlaceData(id, inData, renderer);
+
             unchecked // Allow an overflow in case this number somehow reaches the max.
             {
                 currentIdNum++;
             }
-            
+
             Profiler.endSection();
             return id;
         }
@@ -247,13 +251,13 @@ namespace net.minecraft.client.world.render
             int worldVBO = WorldBuffer.GLHandle;
             int vertices = WorldBuffer.VertexCount;
             WorldBuffer = new(Buffer.Size, vertices, worldVBO, 7, true, true, true, false);
-            GL.NamedBufferData(worldVBO, Buffer.Size, IntPtr.Zero, BufferUsageHint.DynamicDraw);
-            GL.NamedBufferSubData(worldVBO, 0, maxAllocationOffset, (nint)Buffer.Handle);
+            //GL.NamedBufferData(worldVBO, Buffer.Size, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+            //GL.NamedBufferSubData(worldVBO, 0, maxAllocationOffset, (nint)Buffer.Handle);
         }
 
         private void UpdateGLArrayForSegment(BufferSegment segment)
         {
-            GL.NamedBufferSubData(WorldBuffer.GLHandle, segment.Offset, segment.Size, (nint)Buffer.Handle + segment.Offset);
+            //GL.NamedBufferSubData(WorldBuffer.GLHandle, segment.Offset, segment.Size, (nint)Buffer.Handle + segment.Offset);
         }
     }
 

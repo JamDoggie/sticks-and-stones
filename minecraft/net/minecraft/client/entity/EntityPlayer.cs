@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using net.minecraft.src;
 
 namespace net.minecraft.client.entity
@@ -1475,7 +1475,7 @@ namespace net.minecraft.client.entity
             }
             else
             {
-                if (itemStack1.Item.func_46058_c())
+                if (itemStack1.Item.HasTint())
                 {
                     return itemStack1.Item.func_46057_a(itemStack1.ItemDamage, i2);
                 }

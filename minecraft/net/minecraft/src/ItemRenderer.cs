@@ -1,7 +1,9 @@
-﻿using BlockByBlock.net.minecraft.render;
+using BlockByBlock.net.minecraft.render;
+using Godot;
 using net.minecraft.client.entity;
 using net.minecraft.client.entity.render;
 using OpenTK.Graphics.OpenGL;
+using SticksAndStones.sticks_and_stones.bridge_utils;
 
 namespace net.minecraft.src
 {
@@ -174,260 +176,290 @@ namespace net.minecraft.src
 			tessellator1.DrawImmediate();
 		}
 
-		public virtual void renderItemInFirstPerson(float f1)
+		public virtual void renderItemInFirstPerson(float partialTicks)
 		{
-			float f2 = this.prevEquippedProgress + (this.equippedProgress - this.prevEquippedProgress) * f1;
-			EntityPlayerSP entityPlayerSP3 = this.mc.thePlayer;
-			float f4 = entityPlayerSP3.prevRotationPitch + (entityPlayerSP3.rotationPitch - entityPlayerSP3.prevRotationPitch) * f1;
-            Minecraft.renderPipeline.ModelMatrix.PushMatrix();
-            Minecraft.renderPipeline.ModelMatrix.Rotate(f4, 1.0F, 0.0F, 0.0F);
-            Minecraft.renderPipeline.ModelMatrix.Rotate(entityPlayerSP3.prevRotationYaw + (entityPlayerSP3.rotationYaw - entityPlayerSP3.prevRotationYaw) * f1, 0.0F, 1.0F, 0.0F);
-			GameLighting.EnableMeshLighting();
-            Minecraft.renderPipeline.ModelMatrix.PopMatrix();
-			float f6;
-			float f7;
-			if (entityPlayerSP3 is EntityPlayerSP)
-			{
-				EntityPlayerSP entityPlayerSP5 = (EntityPlayerSP)entityPlayerSP3;
-				f6 = entityPlayerSP5.prevRenderArmPitch + (entityPlayerSP5.renderArmPitch - entityPlayerSP5.prevRenderArmPitch) * f1;
-				f7 = entityPlayerSP5.prevRenderArmYaw + (entityPlayerSP5.renderArmYaw - entityPlayerSP5.prevRenderArmYaw) * f1;
-                Minecraft.renderPipeline.ModelMatrix.Rotate((entityPlayerSP3.rotationPitch - f6) * 0.1F, 1.0F, 0.0F, 0.0F);
-                Minecraft.renderPipeline.ModelMatrix.Rotate((entityPlayerSP3.rotationYaw - f7) * 0.1F, 0.0F, 1.0F, 0.0F);
-			}
+			if (mc.theWorld == null)
+				return;
 
-			ItemStack itemStack14 = this.itemToRender;
-			f6 = this.mc.theWorld.getLightBrightness(MathHelper.floor_double(entityPlayerSP3.posX), MathHelper.floor_double(entityPlayerSP3.posY), MathHelper.floor_double(entityPlayerSP3.posZ));
-			f6 = 1.0F;
-			int i15 = this.mc.theWorld.GetLightBrightnessForSkyBlocks(MathHelper.floor_double(entityPlayerSP3.posX), MathHelper.floor_double(entityPlayerSP3.posY), MathHelper.floor_double(entityPlayerSP3.posZ), 0);
-			int i8 = i15 % 65536;
-			int i9 = i15 / 65536;
-			LightmapManager.setLightmapTextureCoords(LightmapManager.lightmapTexUnit, (float)i8 / 1.0F, (float)i9 / 1.0F);
-            Minecraft.renderPipeline.SetColor(1.0F, 1.0F, 1.0F, 1.0F);
-			float f10;
-			float f16;
-			float f18;
-			if (itemStack14 != null)
+            EntityPlayerSP player = mc.thePlayer;
+            ItemStack heldItem = itemToRender;
+
+            float equipProgress = this.prevEquippedProgress + (this.equippedProgress - this.prevEquippedProgress) * partialTicks;
+			float pitch = player.prevRotationPitch + (player.rotationPitch - player.prevRotationPitch) * partialTicks;
+
+			Transform3D armTransform = Minecraft.renderPipeline.ModelMatrix.GetMatrix().GodotTransform();
+
+			if (player is EntityPlayerSP playerSP)
 			{
-				i15 = Item.itemsList[itemStack14.itemID].getColorFromDamage(itemStack14.ItemDamage, 0);
-				f16 = (float)(i15 >> 16 & 255) / 255.0F;
-				f18 = (float)(i15 >> 8 & 255) / 255.0F;
-				f10 = (float)(i15 & 255) / 255.0F;
-                Minecraft.renderPipeline.SetColor(f6 * f16, f6 * f18, f6 * f10, 1.0F);
+				float armPitch = playerSP.prevRenderArmPitch + (playerSP.renderArmPitch - playerSP.prevRenderArmPitch) * partialTicks;
+				float armYaw = playerSP.prevRenderArmYaw + (playerSP.renderArmYaw - playerSP.prevRenderArmYaw) * partialTicks;
+				
+				armTransform = armTransform.LocalRotated(Vector3.Right, Mathf.DegToRad((player.rotationPitch - armPitch) * 0.1f));
+				armTransform = armTransform.LocalRotated(Vector3.Up, Mathf.DegToRad((player.rotationYaw - armYaw) * 0.1f));
+
+                //Minecraft.renderPipeline.ModelMatrix.Rotate((player.rotationPitch - armPitch) * 0.1F, 1.0F, 0.0F, 0.0F);
+                //Minecraft.renderPipeline.ModelMatrix.Rotate((player.rotationYaw - armYaw) * 0.1F, 0.0F, 1.0F, 0.0F);
+            }
+
+			// Hand lighting
+            float brightness = mc.theWorld.getLightBrightness(MathHelper.floor_double(player.posX), MathHelper.floor_double(player.posY), MathHelper.floor_double(player.posZ));
+			int packedLight = this.mc.theWorld.GetLightBrightnessForSkyBlocks(MathHelper.floor_double(player.posX), MathHelper.floor_double(player.posY), MathHelper.floor_double(player.posZ), 0);
+			int blockLight = packedLight % 65536;
+			int skyLight = packedLight / 65536;
+			LightmapManager.setLightmapTextureCoords(LightmapManager.lightmapTexUnit, (float)blockLight / 1.0F, (float)skyLight / 1.0F);
+			
+			//Minecraft.renderPipeline.SetColor(1.0F, 1.0F, 1.0F, 1.0F);
+			
+			if (heldItem != null)
+			{
+				int itemColor = Item.itemsList[heldItem.itemID].getColorFromDamage(heldItem.ItemDamage, 0);
+				float colorRed = (float)(itemColor >> 16 & 255) / 255.0F;
+				float colorGreen = (float)(itemColor >> 8 & 255) / 255.0F;
+				float colorBlue = (float)(itemColor & 255) / 255.0F;
+				
+				//Minecraft.renderPipeline.SetColor(brightness * colorRed, brightness * colorGreen, brightness * colorBlue, 1.0F);
 			}
 			else
 			{
-                Minecraft.renderPipeline.SetColor(f6, f6, f6, 1.0F);
+				//Minecraft.renderPipeline.SetColor(brightness, brightness, brightness, 1.0F);
 			}
 
-			float f11;
-			float f13;
-			if (itemStack14 != null && itemStack14.itemID == Item.map.shiftedIndex)
+			// Render held maps
+			if (heldItem != null && heldItem.itemID == Item.map.shiftedIndex)
 			{
-                Minecraft.renderPipeline.ModelMatrix.PushMatrix();
-				f7 = 0.8F;
-				f16 = entityPlayerSP3.getSwingProgress(f1);
-				f18 = MathHelper.sin(f16 * (float)Math.PI);
-				f10 = MathHelper.sin(MathHelper.sqrt_float(f16) * (float)Math.PI);
-                Minecraft.renderPipeline.ModelMatrix.Translate(-f10 * 0.4F, MathHelper.sin(MathHelper.sqrt_float(f16) * (float)Math.PI * 2.0F) * 0.2F, -f18 * 0.2F);
-				f16 = 1.0F - f4 / 45.0F + 0.1F;
-				if (f16 < 0.0F)
+				//Minecraft.renderPipeline.ModelMatrix.PushMatrix();
+				
+				float mapScale = 0.8F;
+				float swingProgress = player.getSwingProgress(partialTicks);
+				float swingSin = MathHelper.sin(swingProgress * (float)Math.PI);
+				float swingSqrt = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI);
+				
+				//Minecraft.renderPipeline.ModelMatrix.Translate(-swingSqrt * 0.4F, MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI * 2.0F) * 0.2F, -swingSin * 0.2F);
+				
+				float mapTilt = 1.0F - pitch / 45.0F + 0.1F;
+				if (mapTilt < 0.0F)
 				{
-					f16 = 0.0F;
-				}
-                
-				if (f16 > 1.0F)
-				{
-					f16 = 1.0F;
+					mapTilt = 0.0F;
 				}
 
-				f16 = -MathHelper.cos(f16 * (float)Math.PI) * 0.5F + 0.5F;
-                Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, 0.0F * f7 - (1.0F - f2) * 1.2F - f16 * 0.5F + 0.04F, -0.9F * f7);
-                Minecraft.renderPipeline.ModelMatrix.Rotate(90.0F, 0.0F, 1.0F, 0.0F);
-                Minecraft.renderPipeline.ModelMatrix.Rotate(f16 * -85.0F, 0.0F, 0.0F, 1.0F);
-                
+				if (mapTilt > 1.0F)
+				{
+					mapTilt = 1.0F;
+				}
+
+				mapTilt = -MathHelper.cos(mapTilt * (float)Math.PI) * 0.5F + 0.5F;
+				
+				//Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, 0.0F * mapScale - (1.0F - equipProgress) * 1.2F - mapTilt * 0.5F + 0.04F, -0.9F * mapScale);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(90.0F, 0.0F, 1.0F, 0.0F);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(mapTilt * -85.0F, 0.0F, 0.0F, 1.0F);
+
 				GL.BindTexture(TextureTarget.Texture2D, this.mc.renderEngine.getTextureForDownloadableImage(this.mc.thePlayer.skinUrl, this.mc.thePlayer.Texture));
 
-				for (i9 = 0; i9 < 2; ++i9)
+				for (int hand = 0; hand < 2; ++hand)
 				{
-					int i24 = i9 * 2 - 1;
-                    Minecraft.renderPipeline.ModelMatrix.PushMatrix();
-                    Minecraft.renderPipeline.ModelMatrix.Translate(-0.0F, -0.6F, 1.1F * (float)i24);
-                    Minecraft.renderPipeline.ModelMatrix.Rotate((float)(-45 * i24), 1.0F, 0.0F, 0.0F);
-                    Minecraft.renderPipeline.ModelMatrix.Rotate(-90.0F, 0.0F, 0.0F, 1.0F);
-                    Minecraft.renderPipeline.ModelMatrix.Rotate(59.0F, 0.0F, 0.0F, 1.0F);
-                    Minecraft.renderPipeline.ModelMatrix.Rotate((float)(-65 * i24), 0.0F, 1.0F, 0.0F);
-					Renderer render22 = RenderManager.instance.getEntityRenderObject(this.mc.thePlayer);
-					RenderPlayer renderPlayer26 = (RenderPlayer)render22;
-					f13 = 1.0F;
-                    Minecraft.renderPipeline.ModelMatrix.Scale(f13, f13, f13);
-					renderPlayer26.drawFirstPersonHand();
-                    Minecraft.renderPipeline.ModelMatrix.PopMatrix();
+					int handSide = hand * 2 - 1;
+					
+					//Minecraft.renderPipeline.ModelMatrix.PushMatrix();
+					//Minecraft.renderPipeline.ModelMatrix.Translate(-0.0F, -0.6F, 1.1F * (float)handSide);
+					//Minecraft.renderPipeline.ModelMatrix.Rotate((float)(-45 * handSide), 1.0F, 0.0F, 0.0F);
+					//Minecraft.renderPipeline.ModelMatrix.Rotate(-90.0F, 0.0F, 0.0F, 1.0F);
+					//Minecraft.renderPipeline.ModelMatrix.Rotate(59.0F, 0.0F, 0.0F, 1.0F);
+					//Minecraft.renderPipeline.ModelMatrix.Rotate((float)(-65 * handSide), 0.0F, 1.0F, 0.0F);
+
+					Renderer entityRenderer = RenderManager.instance.getEntityRenderObject(this.mc.thePlayer);
+					RenderPlayer renderPlayer = (RenderPlayer)entityRenderer;
+					float handScale = 1.0F;
+					
+					//Minecraft.renderPipeline.ModelMatrix.Scale(handScale, handScale, handScale);
+					
+					renderPlayer.drawFirstPersonHand();
+					
+					//Minecraft.renderPipeline.ModelMatrix.PopMatrix();
 				}
 
-				f18 = entityPlayerSP3.getSwingProgress(f1);
-				f10 = MathHelper.sin(f18 * f18 * (float)Math.PI);
-				f11 = MathHelper.sin(MathHelper.sqrt_float(f18) * (float)Math.PI);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(-f10 * 20.0F, 0.0F, 1.0F, 0.0F);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(-f11 * 20.0F, 0.0F, 0.0F, 1.0F);
-                Minecraft.renderPipeline.ModelMatrix.Rotate(-f11 * 80.0F, 1.0F, 0.0F, 0.0F);
-				f18 = 0.38F;
-				Minecraft.renderPipeline.ModelMatrix.Scale(f18, f18, f18);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(90.0F, 0.0F, 1.0F, 0.0F);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(180.0F, 0.0F, 0.0F, 1.0F);
-                Minecraft.renderPipeline.ModelMatrix.Translate(-1.0F, -1.0F, 0.0F);
-				f10 = 0.015625F;
-                Minecraft.renderPipeline.ModelMatrix.Scale(f10, f10, f10);
+				swingProgress = player.getSwingProgress(partialTicks);
+				swingSin = MathHelper.sin(swingProgress * swingProgress * (float)Math.PI);
+				swingSqrt = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI);
+
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(-swingSin * 20.0F, 0.0F, 1.0F, 0.0F);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(-swingSqrt * 20.0F, 0.0F, 0.0F, 1.0F);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(-swingSqrt * 80.0F, 1.0F, 0.0F, 0.0F);
+
+				float mapItemScale = 0.38F;
+
+				//Minecraft.renderPipeline.ModelMatrix.Scale(mapItemScale, mapItemScale, mapItemScale);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(90.0F, 0.0F, 1.0F, 0.0F);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(180.0F, 0.0F, 0.0F, 1.0F);
+				//Minecraft.renderPipeline.ModelMatrix.Translate(-1.0F, -1.0F, 0.0F);
+
+				float mapPixelScale = 0.015625F;
+
+				//Minecraft.renderPipeline.ModelMatrix.Scale(mapPixelScale, mapPixelScale, mapPixelScale);
+
 				this.mc.renderEngine.bindTexture(this.mc.renderEngine.getTexture("/misc/mapbg.png"));
-				Tessellator tessellator23 = Tessellator.instance;
-				Minecraft.renderPipeline.SetNormal(0.0F, 0.0F, -1.0F);
-                tessellator23.startDrawingQuads();
-				sbyte b27 = 7;
-				tessellator23.AddVertexWithUV((double)(0 - b27), (double)(128 + b27), 0.0D, 0.0D, 1.0D);
-				tessellator23.AddVertexWithUV((double)(128 + b27), (double)(128 + b27), 0.0D, 1.0D, 1.0D);
-				tessellator23.AddVertexWithUV((double)(128 + b27), (double)(0 - b27), 0.0D, 1.0D, 0.0D);
-				tessellator23.AddVertexWithUV((double)(0 - b27), (double)(0 - b27), 0.0D, 0.0D, 0.0D);
-				tessellator23.DrawImmediate();
-				MapData mapData25 = Item.map.getMapData(itemStack14, this.mc.theWorld);
-				this.mapItemRenderer.renderMap(this.mc.thePlayer, this.mc.renderEngine, mapData25);
-                Minecraft.renderPipeline.ModelMatrix.PopMatrix();
+				Tessellator tessellator = Tessellator.instance;
+
+				//Minecraft.renderPipeline.SetNormal(0.0F, 0.0F, -1.0F);
+
+				//tessellator.startDrawingQuads();
+				//sbyte mapBorder = 7;
+				//tessellator.AddVertexWithUV((double)(0 - mapBorder), (double)(128 + mapBorder), 0.0D, 0.0D, 1.0D);
+				//tessellator.AddVertexWithUV((double)(128 + mapBorder), (double)(128 + mapBorder), 0.0D, 1.0D, 1.0D);
+				//tessellator.AddVertexWithUV((double)(128 + mapBorder), (double)(0 - mapBorder), 0.0D, 1.0D, 0.0D);
+				//tessellator.AddVertexWithUV((double)(0 - mapBorder), (double)(0 - mapBorder), 0.0D, 0.0D, 0.0D);
+				//tessellator.DrawImmediate();
+				//MapData mapData = Item.map.getMapData(heldItem, this.mc.theWorld);
+				//this.mapItemRenderer.renderMap(this.mc.thePlayer, this.mc.renderEngine, mapData);
+				//Minecraft.renderPipeline.ModelMatrix.PopMatrix();
 			}
-			else if (itemStack14 != null)
+			else if (heldItem != null)
 			{
-                Minecraft.renderPipeline.ModelMatrix.PushMatrix();
-				f7 = 0.8F;
-				float f12;
-				if (entityPlayerSP3.ItemInUseCount > 0)
+				//Minecraft.renderPipeline.ModelMatrix.PushMatrix();
+
+				float itemScale = 0.8F;
+				if (player.ItemInUseCount > 0)
 				{
-					EnumAction enumAction17 = itemStack14.ItemUseAction;
-					if (enumAction17 == EnumAction.eat || enumAction17 == EnumAction.drink)
+					EnumAction useAction = heldItem.ItemUseAction;
+					if (useAction == EnumAction.eat || useAction == EnumAction.drink)
 					{
-						f18 = (float)entityPlayerSP3.ItemInUseCount - f1 + 1.0F;
-						f10 = 1.0F - f18 / (float)itemStack14.MaxItemUseDuration;
-						f12 = 1.0F - f10;
-						f12 = f12 * f12 * f12;
-						f12 = f12 * f12 * f12;
-						f12 = f12 * f12 * f12;
-						f13 = 1.0F - f12;
-						Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, MathHelper.abs(MathHelper.cos(f18 / 4.0F * (float)Math.PI) * 0.1F) * (float)((double)f10 > 0.2D ? 1 : 0), 0.0F);
-						Minecraft.renderPipeline.ModelMatrix.Translate(f13 * 0.6F, -f13 * 0.5F, 0.0F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(f13 * 90.0F, 0.0F, 1.0F, 0.0F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(f13 * 10.0F, 1.0F, 0.0F, 0.0F);
-                        Minecraft.renderPipeline.ModelMatrix.Rotate(f13 * 30.0F, 0.0F, 0.0F, 1.0F);
+						float useCountRemaining = (float)player.ItemInUseCount - partialTicks + 1.0F;
+						float useProgress = 1.0F - useCountRemaining / (float)heldItem.MaxItemUseDuration;
+						float eatBounce = 1.0F - useProgress;
+						eatBounce = eatBounce * eatBounce * eatBounce;
+						eatBounce = eatBounce * eatBounce * eatBounce;
+						eatBounce = eatBounce * eatBounce * eatBounce;
+						float eatProgress = 1.0F - eatBounce;
+
+						//Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, MathHelper.abs(MathHelper.cos(useCountRemaining / 4.0F * (float)Math.PI) * 0.1F) * (float)((double)useProgress > 0.2D ? 1 : 0), 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Translate(eatProgress * 0.6F, -eatProgress * 0.5F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(eatProgress * 90.0F, 0.0F, 1.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(eatProgress * 10.0F, 1.0F, 0.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(eatProgress * 30.0F, 0.0F, 0.0F, 1.0F);
 					}
 				}
 				else
 				{
-					f16 = entityPlayerSP3.getSwingProgress(f1);
-					f18 = MathHelper.sin(f16 * (float)Math.PI);
-					f10 = MathHelper.sin(MathHelper.sqrt_float(f16) * (float)Math.PI);
-                    Minecraft.renderPipeline.ModelMatrix.Translate(-f10 * 0.4F, MathHelper.sin(MathHelper.sqrt_float(f16) * (float)Math.PI * 2.0F) * 0.2F, -f18 * 0.2F);
+					float swingProgress = player.getSwingProgress(partialTicks);
+					float swingSin = MathHelper.sin(swingProgress * (float)Math.PI);
+					float swingSqrt = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI);
+					//Minecraft.renderPipeline.ModelMatrix.Translate(-swingSqrt * 0.4F, MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI * 2.0F) * 0.2F, -swingSin * 0.2F);
 				}
 
-				Minecraft.renderPipeline.ModelMatrix.Translate(0.7F * f7, -0.65F * f7 - (1.0F - f2) * 0.6F, -0.9F * f7);
-                Minecraft.renderPipeline.ModelMatrix.Rotate(45.0F, 0.0F, 1.0F, 0.0F);
-                
-				f16 = entityPlayerSP3.getSwingProgress(f1);
-				f18 = MathHelper.sin(f16 * f16 * (float)Math.PI);
-				f10 = MathHelper.sin(MathHelper.sqrt_float(f16) * (float)Math.PI);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(-f18 * 20.0F, 0.0F, 1.0F, 0.0F);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(-f10 * 20.0F, 0.0F, 0.0F, 1.0F);
-                Minecraft.renderPipeline.ModelMatrix.Rotate(-f10 * 80.0F, 1.0F, 0.0F, 0.0F);
-				f16 = 0.4F;
-                Minecraft.renderPipeline.ModelMatrix.Scale(f16, f16, f16);
-				if (entityPlayerSP3.ItemInUseCount > 0)
+				//Minecraft.renderPipeline.ModelMatrix.Translate(0.7F * itemScale, -0.65F * itemScale - (1.0F - equipProgress) * 0.6F, -0.9F * itemScale);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(45.0F, 0.0F, 1.0F, 0.0F);
+
+				float swingAnim = player.getSwingProgress(partialTicks);
+				float swingAnimSin = MathHelper.sin(swingAnim * swingAnim * (float)Math.PI);
+				float swingAnimSqrt = MathHelper.sin(MathHelper.sqrt_float(swingAnim) * (float)Math.PI);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(-swingAnimSin * 20.0F, 0.0F, 1.0F, 0.0F);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(-swingAnimSqrt * 20.0F, 0.0F, 0.0F, 1.0F);
+				//Minecraft.renderPipeline.ModelMatrix.Rotate(-swingAnimSqrt * 80.0F, 1.0F, 0.0F, 0.0F);
+				float heldItemScale = 0.4F;
+				//Minecraft.renderPipeline.ModelMatrix.Scale(heldItemScale, heldItemScale, heldItemScale);
+				if (player.ItemInUseCount > 0)
 				{
-					EnumAction enumAction20 = itemStack14.ItemUseAction;
-					if (enumAction20 == EnumAction.block)
+					EnumAction useAction = heldItem.ItemUseAction;
+					if (useAction == EnumAction.block)
 					{
-						Minecraft.renderPipeline.ModelMatrix.Translate(-0.5F, 0.2F, 0.0F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(30.0F, 0.0F, 1.0F, 0.0F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(-80.0F, 1.0F, 0.0F, 0.0F);
-                        Minecraft.renderPipeline.ModelMatrix.Rotate(60.0F, 0.0F, 1.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Translate(-0.5F, 0.2F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(30.0F, 0.0F, 1.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(-80.0F, 1.0F, 0.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(60.0F, 0.0F, 1.0F, 0.0F);
 					}
-					else if (enumAction20 == EnumAction.bow)
+					else if (useAction == EnumAction.bow)
 					{
-						Minecraft.renderPipeline.ModelMatrix.Rotate(-18.0F, 0.0F, 0.0F, 1.0F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(-12.0F, 0.0F, 1.0F, 0.0F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(-8.0F, 1.0F, 0.0F, 0.0F);
-                        Minecraft.renderPipeline.ModelMatrix.Translate(-0.9F, 0.2F, 0.0F);
-						f10 = (float)itemStack14.MaxItemUseDuration - ((float)entityPlayerSP3.ItemInUseCount - f1 + 1.0F);
-						f11 = f10 / 20.0F;
-						f11 = (f11 * f11 + f11 * 2.0F) / 3.0F;
-						if (f11 > 1.0F)
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(-18.0F, 0.0F, 0.0F, 1.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(-12.0F, 0.0F, 1.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(-8.0F, 1.0F, 0.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Translate(-0.9F, 0.2F, 0.0F);
+
+						float bowCharge = (float)heldItem.MaxItemUseDuration - ((float)player.ItemInUseCount - partialTicks + 1.0F);
+						float bowPull = bowCharge / 20.0F;
+						bowPull = (bowPull * bowPull + bowPull * 2.0F) / 3.0F;
+						if (bowPull > 1.0F)
 						{
-							f11 = 1.0F;
+							bowPull = 1.0F;
 						}
 
-						if (f11 > 0.1F)
+						if (bowPull > 0.1F)
 						{
-                            Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, MathHelper.sin((f10 - 0.1F) * 1.3F) * 0.01F * (f11 - 0.1F), 0.0F);
+							Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, MathHelper.sin((bowCharge - 0.1F) * 1.3F) * 0.01F * (bowPull - 0.1F), 0.0F);
 						}
 
-						Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, 0.0F, f11 * 0.1F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(-335.0F, 0.0F, 0.0F, 1.0F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(-50.0F, 0.0F, 1.0F, 0.0F);
-                        Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, 0.5F, 0.0F);
-						f12 = 1.0F + f11 * 0.2F;
-						Minecraft.renderPipeline.ModelMatrix.Scale(1.0F, 1.0F, f12);
-						Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, -0.5F, 0.0F);
-						Minecraft.renderPipeline.ModelMatrix.Rotate(50.0F, 0.0F, 1.0F, 0.0F);
-                        Minecraft.renderPipeline.ModelMatrix.Rotate(335.0F, 0.0F, 0.0F, 1.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, 0.0F, bowPull * 0.1F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(-335.0F, 0.0F, 0.0F, 1.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(-50.0F, 0.0F, 1.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, 0.5F, 0.0F);
+
+						float bowStretch = 1.0F + bowPull * 0.2F;
+
+						//Minecraft.renderPipeline.ModelMatrix.Scale(1.0F, 1.0F, bowStretch);
+						//Minecraft.renderPipeline.ModelMatrix.Translate(0.0F, -0.5F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(50.0F, 0.0F, 1.0F, 0.0F);
+						//Minecraft.renderPipeline.ModelMatrix.Rotate(335.0F, 0.0F, 0.0F, 1.0F);
 					}
 				}
 
-				if (itemStack14.Item.shouldRotateAroundWhenRendering())
+				if (heldItem.Item.shouldRotateAroundWhenRendering())
 				{
-                    Minecraft.renderPipeline.ModelMatrix.Rotate(180.0F, 0.0F, 1.0F, 0.0F);
+					//Minecraft.renderPipeline.ModelMatrix.Rotate(180.0F, 0.0F, 1.0F, 0.0F);
 				}
 
-				if (itemStack14.Item.func_46058_c())
+				if (heldItem.Item.HasTint())
 				{
-					this.renderItem(entityPlayerSP3, itemStack14, 0);
-					i9 = Item.itemsList[itemStack14.itemID].getColorFromDamage(itemStack14.ItemDamage, 1);
-					f10 = (float)(i9 >> 16 & 255) / 255.0F;
-					f11 = (float)(i9 >> 8 & 255) / 255.0F;
-					f12 = (float)(i9 & 255) / 255.0F;
-                    Minecraft.renderPipeline.SetColor(f6 * f10, f6 * f11, f6 * f12, 1.0F);
-					this.renderItem(entityPlayerSP3, itemStack14, 1);
+					this.renderItem(player, heldItem, 0);
+					int overlayColor = Item.itemsList[heldItem.itemID].getColorFromDamage(heldItem.ItemDamage, 1);
+					float overlayRed = (float)(overlayColor >> 16 & 255) / 255.0F;
+					float overlayGreen = (float)(overlayColor >> 8 & 255) / 255.0F;
+					float overlayBlue = (float)(overlayColor & 255) / 255.0F;
+					
+					//Minecraft.renderPipeline.SetColor(brightness * overlayRed, brightness * overlayGreen, brightness * overlayBlue, 1.0F);
+					
+					renderItem(player, heldItem, 1);
 				}
 				else
 				{
-					this.renderItem(entityPlayerSP3, itemStack14, 0);
+					renderItem(player, heldItem, 0);
 				}
-
-                Minecraft.renderPipeline.ModelMatrix.PopMatrix();
 			}
 			else
 			{
-                Minecraft.renderPipeline.ModelMatrix.PushMatrix();
-				f7 = 0.8F;
-				f16 = entityPlayerSP3.getSwingProgress(f1);
-				f18 = MathHelper.sin(f16 * (float)Math.PI);
-				f10 = MathHelper.sin(MathHelper.sqrt_float(f16) * (float)Math.PI);
-				Minecraft.renderPipeline.ModelMatrix.Translate(-f10 * 0.3F, MathHelper.sin(MathHelper.sqrt_float(f16) * (float)Math.PI * 2.0F) * 0.4F, -f18 * 0.4F);
-				Minecraft.renderPipeline.ModelMatrix.Translate(0.8F * f7, -0.75F * f7 - (1.0F - f2) * 0.6F, -0.9F * f7);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(45.0F, 0.0F, 1.0F, 0.0F);
-                
-				f16 = entityPlayerSP3.getSwingProgress(f1);
-				f18 = MathHelper.sin(f16 * f16 * (float)Math.PI);
-				f10 = MathHelper.sin(MathHelper.sqrt_float(f16) * (float)Math.PI);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(f10 * 70.0F, 0.0F, 1.0F, 0.0F);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(-f18 * 20.0F, 0.0F, 0.0F, 1.0F);
-				GL.BindTexture(TextureTarget.Texture2D, this.mc.renderEngine.getTextureForDownloadableImage(this.mc.thePlayer.skinUrl, this.mc.thePlayer.Texture));
-				Minecraft.renderPipeline.ModelMatrix.Translate(-1.0F, 3.6F, 3.5F);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(120.0F, 0.0F, 0.0F, 1.0F);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(200.0F, 1.0F, 0.0F, 0.0F);
-				Minecraft.renderPipeline.ModelMatrix.Rotate(-135.0F, 0.0F, 1.0F, 0.0F);
-				Minecraft.renderPipeline.ModelMatrix.Scale(1.0F, 1.0F, 1.0F);
-                Minecraft.renderPipeline.ModelMatrix.Translate(5.6F, 0.0F, 0.0F);
-				Renderer render19 = RenderManager.instance.getEntityRenderObject(this.mc.thePlayer);
-				RenderPlayer renderPlayer21 = (RenderPlayer)render19;
-				f10 = 1.0F;
-                Minecraft.renderPipeline.ModelMatrix.Scale(f10, f10, f10);
-				renderPlayer21.drawFirstPersonHand();
-                Minecraft.renderPipeline.ModelMatrix.PopMatrix();
+				float handScale = 0.8F;
+				float swingProgress = player.getSwingProgress(partialTicks);
+				float swingSin = MathHelper.sin(swingProgress * (float)Math.PI);
+				float swingSqrt = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI);
+
+				armTransform = armTransform.LocalTranslated(new Vector3(-swingSqrt * 0.3F, MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI * 2.0F) * 0.4F, -swingSin * 0.4F));
+				armTransform = armTransform.LocalTranslated(new Vector3(0.8F * handScale, -0.75F * handScale - (1.0F - equipProgress) * 0.6F, -0.9F * handScale));
+				armTransform = armTransform.LocalRotated(Vector3.Up, Mathf.DegToRad(45.0F));
+
+                swingProgress = player.getSwingProgress(partialTicks);
+				swingSin = MathHelper.sin(swingProgress * swingProgress * (float)Math.PI);
+				swingSqrt = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI);
+				
+				armTransform = armTransform.LocalRotated(Vector3.Up, swingSqrt * Mathf.DegToRad(70.0F));
+				armTransform = armTransform.LocalRotated(Vector3.Back, -swingSin * Mathf.DegToRad(20.0F));
+				armTransform = armTransform.LocalTranslated(new Vector3(-1.0F, 3.6F, 3.5F));
+				armTransform = armTransform.LocalRotated(Vector3.Back, Mathf.DegToRad(120.0F));
+				armTransform = armTransform.LocalRotated(Vector3.Right, Mathf.DegToRad(200.0F));
+				armTransform = armTransform.LocalRotated(Vector3.Up, Mathf.DegToRad(-135.0F));
+				armTransform = armTransform.LocalTranslated(new Vector3(5.6F, 0.0F, 0.0F));
+
+                Renderer entityRenderer = RenderManager.instance.getEntityRenderObject(this.mc.thePlayer);
+				RenderPlayer renderPlayer = (RenderPlayer)entityRenderer;
+				float renderScale = 1.0F;
+
+				// Model-space correction: the GLB arm has its pivot at the top-left corner
+				// with the arm extending in -Y, while the original ModelRenderer has an
+				// interior pivot offset by the rotation point with the arm extending in +Y.
+				// Use a 180° X rotation (flips Y and Z) instead of Scale(1,-1,1)
+				armTransform = armTransform.LocalTranslated(new Vector3(-0.5F, 0.0F, 0.0F));
+				armTransform = armTransform.LocalRotated(Vector3.Right, Mathf.DegToRad(180.0F));
+
+				mc._GodotBridge?.ArmNode?.Transform = armTransform;
+                //renderPlayer.drawFirstPersonHand();
 			}
-            
+
 			GameLighting.DisableMeshLighting();
 		}
 

@@ -20,6 +20,7 @@ namespace net.minecraft.client
     using BlockByBlock.net.minecraft.render;
     using net.minecraft.client.entity;
     using net.minecraft.client.entity.render.model;
+    using SticksAndStones.sticks_and_stones;
 
     public abstract class Minecraft
 	{
@@ -30,7 +31,8 @@ namespace net.minecraft.client
 			guiAchievement = new GuiAchievement(this);
 		}
 
-		public static sbyte[] field_28006_b = new sbyte[10485760];
+        public MinecraftBridge? _GodotBridge;
+        public static sbyte[] field_28006_b = new sbyte[10485760];
 		public static Minecraft Instance;
 		public PlayerController playerController;
 		private bool fullscreen = false;
@@ -39,7 +41,7 @@ namespace net.minecraft.client
 		public int displayHeight;
 		private OpenGlCapsChecker glCapabilities;
 		private Timer timer = new Timer(20.0F);
-		public World theWorld;
+		public World? theWorld;
 		public RenderGlobal renderGlobal;
 		public EntityPlayerSP thePlayer;
 		public EntityLiving renderViewEntity;
@@ -504,7 +506,7 @@ namespace net.minecraft.client
 			GC.Collect();
 		}
 
-		public unsafe virtual void run()
+		public virtual void _RunGame()
 		{
 			this.running = true;
 
@@ -521,45 +523,41 @@ namespace net.minecraft.client
 				this.onMinecraftCrash(new UnexpectedThrowable("Failed to start game", exception11));
 				return;
 			}
-
-			try
+		}
+            
+		public virtual void _RunLoop()
+        {
+            try
 			{
-				while (this.running)
+				try
 				{
-					try
-					{
-						this.runGameLoop();
-					}
-					catch (MinecraftException)
-					{
-						this.theWorld = null;
-						this.changeWorld1((World)null);
-						this.displayGuiScreen(new GuiConflictWarning());
-					}
-					catch (OutOfMemoryException)
-					{
-						this.freeMemory();
-						this.displayGuiScreen(new GuiMemoryErrorScreen());
-						GC.Collect();
-						GC.WaitForPendingFinalizers();
-					}
+					runGameLoop();
+				}
+				catch (MinecraftException)
+				{
+					theWorld = null;
+					changeWorld1(null);
+					displayGuiScreen(new GuiConflictWarning());
+				}
+				catch (OutOfMemoryException)
+				{
+					freeMemory();
+					displayGuiScreen(new GuiMemoryErrorScreen());
+					GC.Collect();
+					GC.WaitForPendingFinalizers();
 				}
 			}
-			catch (MinecraftError)
+			catch (MinecraftError e)
 			{
+				Godot.GD.PrintErr(e.Message);
 			}
 			catch (Exception throwable13)
 			{
-				this.freeMemory();
+				freeMemory();
 				Console.WriteLine(throwable13.ToString());
 				Console.Write(throwable13.StackTrace);
-				this.onMinecraftCrash(new UnexpectedThrowable("Unexpected error", throwable13));
+				onMinecraftCrash(new UnexpectedThrowable("Unexpected error", throwable13));
 			}
-			finally
-			{
-				this.shutdownMinecraftApplet();
-			}
-
 		}
 
 		public static double? previousMouseX = null;
@@ -568,14 +566,12 @@ namespace net.minecraft.client
 
 		private void runGameLoop()
 		{
-			if (this.mcApplet != null && !mcApplet.Exists)
+			if (mcApplet != null && !mcApplet.Exists)
 			{
-				this.running = false;
+				running = false;
 			}
 			else
 			{
-				
-
                 AxisAlignedBB.clearBoundingBoxPool();
 				Vec3D.initialize();
 				Profiler.startSection("root");
@@ -1767,17 +1763,17 @@ namespace net.minecraft.client
 			this.changeWorld2((World)null, string1);
 		}
 
-		public virtual void changeWorld1(World world1)
+		public virtual void changeWorld1(World? world1)
 		{
 			this.changeWorld2(world1, "");
 		}
 
-		public virtual void changeWorld2(World world1, string string2)
+		public virtual void changeWorld2(World? world1, string string2)
 		{
 			this.changeWorld(world1, string2, (EntityPlayer)null);
 		}
 
-		public virtual void changeWorld(World world1, string string2, EntityPlayer entityPlayer3)
+		public virtual void changeWorld(World? world1, string string2, EntityPlayer entityPlayer3)
 		{
 			this.statFileWriter.func_27175_b();
 			this.statFileWriter.syncStats();
@@ -2075,42 +2071,47 @@ namespace net.minecraft.client
 
 		}
         
-		public static void startMainThread1(string username, string? sessionId)
+		public static Minecraft startMainThread(string username, string? sessionId, MinecraftBridge? godotBridge)
 		{
-			startMainThread(username, sessionId, null);
+			return startMainThread(username, sessionId, null, godotBridge);
 		}
 
-		public static void startMainThread(string username, string? sessionId, string? serverToConnect)
+		public static Minecraft startMainThread(string username, string? sessionId, string? serverToConnect, MinecraftBridge? godotBridge)
 		{
 			bool fullscreen = false;
+
+			GLFWProvider.CheckForMainThread = false;
 
 			NativeWindowSettings windowSettings = new()
 			{
 				Size = new Vector2i(854, 480),
-				Profile = ContextProfile.Core
+				Profile = ContextProfile.Compatability
 			};
 
 			MinecraftApplet applet = new(windowSettings);
 
-			MinecraftImpl minecraftImpl7 = new MinecraftImpl(applet, 854, 480, fullscreen);
+			MinecraftImpl mc = new MinecraftImpl(applet, 854, 480, fullscreen);
 
-			minecraftImpl7.minecraftUri = "www.minecraft.net";
+			mc.minecraftUri = "www.minecraft.net";
 			if (!string.ReferenceEquals(username, null) && !string.ReferenceEquals(sessionId, null))
 			{
-				minecraftImpl7.session = new Session(username, sessionId);
+				mc.session = new Session(username, sessionId);
 			}
 			else
 			{
-				minecraftImpl7.session = new Session("Player" + DateTimeHelper.CurrentUnixTimeMillis() % 1000L, "");
+				mc.session = new Session("Player" + DateTimeHelper.CurrentUnixTimeMillis() % 1000L, "");
 			}
 
 			if (serverToConnect != null)
 			{
 				string[] string9 = serverToConnect.Split(":", true);
-				minecraftImpl7.setServer(string9[0], int.Parse(string9[1]));
+				mc.setServer(string9[0], int.Parse(string9[1]));
 			}
 
-			minecraftImpl7.run();
+            mc._GodotBridge = godotBridge;
+            mc._RunGame();
+			
+            return mc;
 		}
 
 		public virtual NetClientHandler SendQueue
@@ -2121,10 +2122,10 @@ namespace net.minecraft.client
 			}
 		}
         
-		public static void Main(string[] string0)
+		public static Minecraft _EntryPoint(MinecraftBridge godotBridge)
 		{
 			string playerName = "Player" + DateTimeHelper.CurrentUnixTimeMillis() % 1000L;
-			startMainThread1(playerName, null);
+			return startMainThread(playerName, null, godotBridge);
 		}
 
 		public static bool GuiEnabled

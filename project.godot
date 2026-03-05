@@ -15,6 +15,10 @@ run/main_scene="uid://cg7unef3p1wl4"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
+[display]
+
+window/vsync/vsync_mode=0
+
 [dotnet]
 
 project/assembly_name="SticksAndStones"

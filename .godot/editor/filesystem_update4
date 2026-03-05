@@ -1,2 +1,4 @@
-res://sticks_and_stones/MinecraftNode.cs
+res://sticks_and_stones/MinecraftGodotCamera.cs
+res://sticks_and_stones/MinecraftBridge.cs
 res://main-scene.tscn
+res://modern_models/player/steve.tres
